@@ -46,4 +46,19 @@ A899_D6 <- read_tsv(file = "Read_Count_Data/A899_D6_gene.tsv",
                                   "Read Count"))
 
 # ----- merge data into one dataframe -----
+read_counts_df <- data.frame(A778_D0, A778_D6[3], 
+                             A820_D0[3], A820_D6[3], 
+                             A870_D0[3], A870_D6[3], 
+                             A899_D0[3], A899_D6[3])
+colnames(read_counts_df) <- c("Ensembl Gene Record", 
+                              "Common Gene Name", 
+                              "A778_D0", 
+                              "A778_D6", 
+                              "A820_D0", 
+                              "A820_D6", 
+                              "A870_D0", 
+                              "A870_D6", 
+                              "A899_D0", 
+                              "A899_D6")
+
 
