@@ -78,6 +78,25 @@ colnames(A899_df) <- c("ensembl_gene_rec", "gene_name", "d0_rc", "d6_rc")
 # create list of all patients for ease of function application
 patients_list <- mget(ls(pattern = "^A.*_df$"))
 
+# ----- data exploration -----
+lapply(patients_list, head)
+lapply(patients_list, summary) 
+lapply(patients_list, str)
+lapply(patients_list[[1]], typeof)
+lapply(patients_list[[1]], class)
+
+# check for OCSC genes in dataset
+relevant_genes <- list()
+for (i in 1:length(patients_list)) {
+  relevant_genes[[i]] <- patients_list[[i]] %>% filter(gene_name == "ALDH1A1"| 
+                                                         gene_name =="CD44"| 
+                                                         # gene_name =="CD133"| 
+                                                         gene_name == "CD24"| 
+                                                         # gene_name =="CD117"| 
+                                                         gene_name == "EPCAM"| 
+                                                         gene_name ==  "THY1")
+}
+
 
 
 
