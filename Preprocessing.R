@@ -6,74 +6,41 @@
 library(tidyverse)
 
 # ----- import data -----
-# patient 1
-A778_D0 <- read_tsv(file = "Read_Count_Data/A778_D0_gene.tsv", 
-                    col_names = c("ensembl_gene_rec",
-                                  "gene_name",
-                                  "read_count"),
-                    na = "0")
-A778_D6 <- read_tsv(file = "Read_Count_Data/A778_D6_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
+tsv_files <- list.files(path = "./Read_Count_Data/", pattern = "\\.tsv$", full.names = TRUE)
+print(tsv_files)
 
-# patient 2
-A820_D0 <- read_tsv(file = "Read_Count_Data/A820_D0_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
-A820_D6 <- read_tsv(file = "Read_Count_Data/A820_D6_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
+df_names <- tsv_files %>% 
+  str_replace_all(c("./.*/" = "", "_gene.tsv" = ""))
 
-# patient 3
-A870_D0 <- read_tsv(file = "Read_Count_Data/A870_D0_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
-A870_D6 <- read_tsv(file = "Read_Count_Data/A870_D6_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
+all_dfs <- list()
+for (file in unique(tsv_files)) {
+  all_dfs[[file]] <- read_tsv(file = file, 
+                              col_names = c("ensembl_gene_rec", 
+                                            "gene_name", 
+                                            "read_count"), 
+                              na = "0")
+}
 
-# patient 4
-A899_D0 <- read_tsv(file = "Read_Count_Data/A899_D0_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
-A899_D6 <- read_tsv(file = "Read_Count_Data/A899_D6_gene.tsv", 
-                    col_names = c("ensembl_gene_rec", 
-                                  "gene_name", 
-                                  "read_count"), 
-                    na = "0")
+all_dfs <- all_dfs %>% set_names(df_names)
+invisible(list2env(all_dfs, globalenv()))
 
 # ----- create individual df for each patient -----
-A778_df <- merge(A778_D0, 
-                 A778_D6, 
-                 by = c("ensembl_gene_rec", "gene_name"))
-colnames(A778_df) <- c("ensembl_gene_rec", "gene_name", "d0_rc", "d6_rc") # rc = read count
+patient_ids <- unique(str_replace_all(string = df_names,
+                                      pattern = "_D[06]$",
+                                      replacement = ""))
 
-A820_df <- merge(A820_D0, 
-                 A820_D6, 
-                 by = c("ensembl_gene_rec", "gene_name"))
-colnames(A820_df) <- c("ensembl_gene_rec", "gene_name", "d0_rc", "d6_rc")
+for (id in patient_ids) {
+  df_d0 <- get(paste0(id, "_D0"))
+  df_d6 <- get(paste0(id, "_D6"))
 
-A870_df <- merge(A870_D0, 
-                 A870_D6, 
-                 by = c("ensembl_gene_rec", "gene_name"))
-colnames(A870_df) <- c("ensembl_gene_rec", "gene_name", "d0_rc", "d6_rc")
+  colnames(df_d0)[3] <- "d0_rc"
+  colnames(df_d6)[3] <- "d6_rc"
 
-A899_df <- merge(A899_D0, 
-                 A899_D6, 
-                 by = c("ensembl_gene_rec", "gene_name"))
-colnames(A899_df) <- c("ensembl_gene_rec", "gene_name", "d0_rc", "d6_rc")
+  merged_df <- merge(df_d0, 
+                     df_d6, 
+                     by = c("ensembl_gene_rec", "gene_name"))
+  assign(paste0(id, "_df"), merged_df)
+}
 
 # create list of all patients for ease of function application
 patients_list <- mget(ls(pattern = "^A.*_df$"))
