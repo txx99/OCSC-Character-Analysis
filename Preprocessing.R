@@ -64,6 +64,15 @@ for (i in 1:length(patients_list)) {
                                                          gene_name ==  "THY1")
 }
 
+# ----- data cleaning -----
+clean_patients <- list()
+for (i in 1:length(patients_list)) {
+  clean_df <- patients_list[[i]] %>% 
+    filter(!grepl("^_", ensembl_gene_rec) &
+             !(is.na(d0_rc) & is.na(d6_rc)))
+  clean_patients[[i]] <- clean_df
+  assign(paste0("clean_", patient_ids[i]), clean_df)
+}
 
 
 
