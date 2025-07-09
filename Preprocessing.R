@@ -6,12 +6,15 @@
 library(tidyverse)
 
 # ----- import data -----
+# paths to files
 tsv_files <- list.files(path = "./Read_Count_Data/", pattern = "\\.tsv$", full.names = TRUE)
 print(tsv_files)
 
+# extract clean df names (patient ID + day)
 df_names <- tsv_files %>% 
   str_replace_all(c("./.*/" = "", "_gene.tsv" = ""))
 
+# list all the dfs (as tibbles) in one variable
 all_dfs <- list()
 for (file in unique(tsv_files)) {
   all_dfs[[file]] <- read_tsv(file = file, 
@@ -21,7 +24,10 @@ for (file in unique(tsv_files)) {
                               na = "0")
 }
 
+# rename dfs from file path to patient + day 
 all_dfs <- all_dfs %>% set_names(df_names)
+
+# turn all listed dfs into individual objects
 invisible(list2env(all_dfs, globalenv()))
 
 # ----- create individual df for each patient -----
@@ -30,17 +36,21 @@ patient_ids <- unique(str_replace_all(string = df_names,
                                       replacement = ""))
 
 for (id in patient_ids) {
-  df_d0 <- get(paste0(id, "_D0"))
+  df_d0 <- get(paste0(id, "_D0")) # get data for id_D0 variable 
   df_d6 <- get(paste0(id, "_D6"))
 
-  colnames(df_d0)[3] <- "d0_rc"
+  colnames(df_d0)[3] <- "d0_rc" # rename data col to include day
   colnames(df_d6)[3] <- "d6_rc"
 
-  merged_df <- merge(df_d0, 
+  merged_df <- merge(df_d0, # merge d0 + d6 dfs 
                      df_d6, 
                      by = c("ensembl_gene_rec", "gene_name"))
-  assign(paste0(id, "_df"), merged_df)
+  
+  assign(paste0(id, "_df"), merged_df) #assign the id's merged df to id_df variable
 }
+
+# intermediary dfs (df_d0, df_d6, merged_df) currently hold final id's data (A899_df) == duplicate objects
+rm(df_d0, df_d6, merged_df)
 
 # create list of all patients for ease of function application
 patients_list <- mget(ls(pattern = "^A.*_df$"))
@@ -53,15 +63,16 @@ lapply(patients_list[[1]], typeof)
 lapply(patients_list[[1]], class)
 
 # check for OCSC genes in dataset
-relevant_genes <- list()
+raw_relevant_genes <- list()
 for (i in 1:length(patients_list)) {
-  relevant_genes[[i]] <- patients_list[[i]] %>% filter(gene_name == "ALDH1A1"| 
+  raw_relevant_genes[[i]] <- patients_list[[i]] %>% filter(gene_name == "ALDH1A1"| 
                                                          gene_name =="CD44"| 
                                                          # gene_name =="CD133"| 
                                                          gene_name == "CD24"| 
                                                          # gene_name =="CD117"| 
                                                          gene_name == "EPCAM"| 
                                                          gene_name ==  "THY1")
+  names(raw_relevant_genes)[i] <- names(patients_list)[i]
 }
 
 # ----- data cleaning -----
@@ -72,7 +83,11 @@ for (i in 1:length(patients_list)) {
              !(is.na(d0_rc) & is.na(d6_rc)))
   clean_patients[[i]] <- clean_df
   assign(paste0("clean_", patient_ids[i]), clean_df)
+  names(clean_patients)[i] <- names(patients_list)[i]
 }
+
+# intermediary obj 'clean_df' currently duplicate of final id data
+rm(clean_df)
 
 
 
