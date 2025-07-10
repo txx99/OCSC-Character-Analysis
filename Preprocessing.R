@@ -59,14 +59,14 @@ patients_list <- mget(ls(pattern = "^A.*_df$"))
 # -------------- make inter-patient dfs by timepoint -----------
 d0_dfs_list <- mget(ls(pattern = "D0$"))
 d0_df<- purrr::reduce(.x=d0_dfs_list, merge, by=c("ensembl_gene_rec", "gene_name"), all=TRUE)
-colnames(d0_df)[3:6]<- str_replace_all(names(d0_dfs_list), "_D0$", "")
+colnames(d0_df)[3:6]<- names(d0_dfs_list)
 
 d6_dfs_list <- mget(ls(pattern = "D6$"))
 d6_df<- purrr::reduce(.x=d6_dfs_list, merge, by=c("ensembl_gene_rec", "gene_name"), all=TRUE)
-colnames(d6_df)[3:6]<- str_replace_all(names(d6_dfs_list), "_D6$", "")
+colnames(d6_df)[3:6]<- names(d6_dfs_list)
 
-interpatient_dfs<- list()
-interpatient_dfs<- mget(ls(pattern='^d[06]_df$'))
+all_data<- merge(d0_df, d6_df, by= c("ensembl_gene_rec", "gene_name"), all=TRUE)
+
 
 # ----- data exploration -----
 lapply(patients_list, head)
@@ -99,15 +99,18 @@ for (i in 1:length(patients_list)) {
              !(is.na(d0_rc) & is.na(d6_rc)))
   
   clean_patients[[i]] <- clean_df 
+  print(sum(duplicated(clean_df$gene_name)))
   write.csv(clean_df, paste0("clean_", names(patients_list)[i], '.csv'), row.names = FALSE)
 }
 rm(clean_df)
 
-#interpatient (these are not well filtered idk)
-cleaned_interpatient_dfs<- list()
-for (i in 1:length(interpatient_dfs)) {
-  clean_df <- interpatient_dfs[[i]] %>% 
-      filter(!grepl("^_", ensembl_gene_rec))
-  write.csv(clean_df, paste0("clean_", names(interpatient_dfs)[i], '.csv'), row.names = FALSE)
-}
+#interpatient
+clean_all_data <- all_data[!apply(is.na(all_data[, 3:10]), 1, all), ] %>% 
+  # looking at cols 3:10 by row, if all() cols TRUE for is.na(), exclude that row 
+    filter(!grepl("^_", ensembl_gene_rec))
+  # remove the initial rows giving summary stats
+
+sum(duplicated(clean_all_data$gene_name)) #TRUE
+
+write.csv(clean_all_data, 'clean_all_data.csv', row.names = FALSE)
 
