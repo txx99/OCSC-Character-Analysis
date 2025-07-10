@@ -20,6 +20,7 @@ for (i in patient_csv_files){
   name<- get(name) 
   name[is.na(name)]<- 0
 }
+rm(name, len)
 
 all_data<- read.csv(all_data_file, row.names = 1)
 all_data[is.na(all_data)]<- 0
@@ -41,6 +42,7 @@ for (id in patient_dfs){
   boxplot(df[,2:3], main = paste0("Boxplot of ", id, " Expression Values"), col="lightblue", outline=FALSE,
           ylab='Read Count')
 }
+rm(df)
 
 boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
           ylab='Read count')
@@ -63,9 +65,26 @@ summary(colnames(all_data[2:9]) == design_table$samples)
 DGE_counts$samples$group<- as.factor(design_table$day)
 
 #------filter low expression genes---------
+# filterByExpr keeps genes that have at least min.count ( = 10) reads in a worthwhile number samples
+# will automatically look in your DGEList object for group info, etc
+genes_to_keep <- filterByExpr(DGE_counts)
+summary(genes_to_keep)
 
+# filter data 
+DGE_counts <- DGE_counts[genes_to_keep, keep.lib.sizes = FALSE] #recalculate library sizes
+dim(DGE_counts)[1]==summary(genes_to_keep)[3]
+rm(genes_to_keep)
 
 # ----------normalisation-----------------
+# comparing gene expr bw samples, but different samples have different library sizes (total read count) --> can skew analysis
+# normalise so that each sample has relatively similar impact on DEA analysis, reduce bias for high expr genes
+DGE_counts$samples$norm.factors #currently all samples weighed equally
+
+# calcNormFactors() normalises normalizes across all samples based on lib sizes (assumption: genes *not* differentially expressed)
+# by scaling to minimise LogFC bw samples of the same treatment
+DGE_counts <- calcNormFactors(DGE_counts)
+DGE_counts$samples$norm.factors # see normalisation factors have been adjusted
+
 
 #---------dispersion-------------------
 
