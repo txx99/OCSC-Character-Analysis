@@ -48,9 +48,24 @@ boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="
 # ----DGEList------
 # create DGEList class object 
 DGE_counts <- DGEList(counts = all_data,
-                          genes = "gene_name")
-#------normalisation-----------------
+                          genes = all_data$gene_name)
 
+
+# add 'day' info as condition 
+design_table<- as.data.frame(colnames(all_data[2:9]))
+design_table<- rename(design_table, 'samples'='colnames(all_data[2:9])')
+design_table$day<- c(rep("day 0",4), rep("day 6",4))
+
+# Confirm order matches 
+summary(colnames(all_data[2:9]) == design_table$samples)
+
+# Add grouping information to DGEList object
+DGE_counts$samples$group<- as.factor(design_table$day)
+
+#------filter low expression genes---------
+
+
+# ----------normalisation-----------------
 
 #---------dispersion-------------------
 
