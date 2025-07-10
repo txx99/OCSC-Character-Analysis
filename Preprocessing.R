@@ -55,6 +55,19 @@ rm(df_d0, df_d6, merged_df)
 # create list of all patients for ease of function application
 patients_list <- mget(ls(pattern = "^A.*_df$"))
 
+
+# -------------- make inter-patient dfs by timepoint -----------
+d0_dfs_list <- mget(ls(pattern = "D0$"))
+d0_df<- purrr::reduce(.x=d0_dfs_list, merge, by=c("ensembl_gene_rec", "gene_name"), all=TRUE)
+colnames(d0_df)[3:6]<- str_replace_all(names(d0_dfs_list), "_D0$", "")
+
+d6_dfs_list <- mget(ls(pattern = "D6$"))
+d6_df<- purrr::reduce(.x=d6_dfs_list, merge, by=c("ensembl_gene_rec", "gene_name"), all=TRUE)
+colnames(d6_df)[3:6]<- str_replace_all(names(d6_dfs_list), "_D6$", "")
+
+interpatient_dfs<- list()
+interpatient_dfs<- mget(ls(pattern='^d[06]_df$'))
+
 # ----- data exploration -----
 lapply(patients_list, head)
 lapply(patients_list, summary) 
@@ -62,7 +75,7 @@ lapply(patients_list, str)
 lapply(patients_list[[1]], typeof)
 lapply(patients_list[[1]], class)
 
-# check for OCSC genes in dataset
+# check for OCSC genes in datasets
 raw_relevant_genes <- list()
 for (i in 1:length(patients_list)) {
   raw_relevant_genes[[i]] <- patients_list[[i]] %>% filter(gene_name == "ALDH1A1"| 
@@ -75,21 +88,26 @@ for (i in 1:length(patients_list)) {
   names(raw_relevant_genes)[i] <- names(patients_list)[i]
 }
 
-# ----- data cleaning -----
+
+# ----- data cleaning & exporting -----
+
+#intrapatient 
 clean_patients <- list()
 for (i in 1:length(patients_list)) {
   clean_df <- patients_list[[i]] %>% 
-    filter(!grepl("^_", ensembl_gene_rec) &
+    filter(!grepl("^_", ensembl_gene_rec) & #removes first five rows relaying NA info
              !(is.na(d0_rc) & is.na(d6_rc)))
-  clean_patients[[i]] <- clean_df
-  assign(paste0("clean_", patient_ids[i]), clean_df)
-  names(clean_patients)[i] <- names(patients_list)[i]
+  
+  clean_patients[[i]] <- clean_df 
+  write.csv(clean_df, paste0("clean_", names(patients_list)[i], '.csv'), row.names = FALSE)
 }
-
-# intermediary obj 'clean_df' currently duplicate of final id data
 rm(clean_df)
 
-
-
-
+#interpatient (these are not well filtered idk)
+cleaned_interpatient_dfs<- list()
+for (i in 1:length(interpatient_dfs)) {
+  clean_df <- interpatient_dfs[[i]] %>% 
+      filter(!grepl("^_", ensembl_gene_rec))
+  write.csv(clean_df, paste0("clean_", names(interpatient_dfs)[i], '.csv'), row.names = FALSE)
+}
 
