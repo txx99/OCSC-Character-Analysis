@@ -6,7 +6,7 @@
 library(tidyverse)
 library(edgeR)
 library(limma) #dependency of edgeR
-library(tidyverse)
+library(ggplot2)
 
 
 # --- load cleaned data ----
@@ -107,3 +107,13 @@ OCSC_markers <- most_genes$table %>% filter(gene_name == "ALDH1A1"|
 OCSC_markers # stats for all OCSC genes
 # all OCSC have insignificant FDR
 # CD44 top ranked of the five
+
+# ----visualizations--------------------
+OCSC_markers %>% ggplot(aes(x = gene_name, 
+                            y = logFC)) + 
+  geom_col() + 
+  geom_text(aes(y = 2, 
+                label = round(FDR, digits = 4))) +
+  labs(x = 'gene', 
+       y = 'logFC Value') +
+  theme_classic()
