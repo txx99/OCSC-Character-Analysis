@@ -6,20 +6,42 @@
 library(edgeR)
 library(limma) #dependency of edgeR
 library(tidyverse)
-
+library(ggplot2)
+library(EnhancedVolcano)
 
 # --- load cleaned data ----
 
 all_data_file<- "./Clean_Data/clean_all_data.csv"
 
 # assign NAs as 0s
-all_data<- read.csv(all_data_file, row.names = 1)
+all_data<- read.csv(all_data_file)
 all_data[is.na(all_data)]<- 0
 
 #-----boxplots + scatterplots? ------
+all_data_long <- all_data %>% 
+  pivot_longer(!c(ensembl_gene_rec, gene_name), 
+               names_to = c('patient', 'day'), 
+               names_sep = '_',
+               values_to = 'read_count')
 
-boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
-        ylab='Read count')
+all_data_wide <- all_data_long %>% 
+  pivot_wider(names_from = day, 
+              values_from = read_count)
+
+all_data_wide %>%
+  mutate(D0 = as.numeric(unlist(D0)),
+         D6 = as.numeric(unlist(D6)),
+         patient = as.factor(patient)) %>%
+  ggplot(aes(x = D0, 
+             y = D6, 
+             colour = patient)) +
+  geom_point(alpha = 0.5) +
+  labs(x = 'D0 Read Count', 
+       y = 'D6 Read Count') +
+  theme_bw()
+
+# boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
+#         ylab='Read count')
 
 # ----DGEList------
 # create DGEList class object 
@@ -97,16 +119,34 @@ rm(most_genes)
 # CD44 top ranked of the five
 
 
+OCSC_markers %>% ggplot(aes(x = genes, 
+                            y = logFC)) + 
+  geom_col() + 
+  geom_text(aes(y = 2, 
+                label = round(FDR, digits = 4))) +
+  labs(x = 'gene', 
+       y = 'logFC Value') +
+  theme_classic()
 
 
+OCSC_markers %>% EnhancedVolcano(lab = 'genes', 
+                                 x = 'logFC' , 
+                                 y = 'FDR',
+                                 title = '',
+                                 xlab = 'Log2 FC',
+                                 ylab = 'FDR (p-adj)',
+                                 pCutoff = 0.05, 
+                                 FCcutoff = 2)
 
 
-
-
-
-
-
-
+top_genes$table %>% EnhancedVolcano(lab = top_genes$table$genes, 
+                                 x = 'logFC' , 
+                                 y = 'FDR',
+                                 title = '',
+                                 xlab = 'Log2 FC',
+                                 ylab = 'FDR (p-adj)',
+                                 pCutoff = 0.05, 
+                                 FCcutoff = 2)
 
 
 
