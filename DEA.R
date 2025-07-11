@@ -8,20 +8,20 @@ library(limma) #dependency of edgeR
 
 
 # --- load cleaned data ----
-patient_csv_files<-(list.files('./', "^clean_A", full.names = FALSE ))
-all_data_file<- "clean_all_data.csv"
+patient_csv_files<-(list.files("^clean_A", full.names = FALSE ))
+all_data_file<- "./Clean_Data/clean_all_data.csv"
 
 patient_dfs=list() # list of all clean patient dfs
 for (i in patient_csv_files){
   len<- length(patient_dfs)
   name<- str_replace_all(i, c(".csv$"= "", "^clean_" = "")) # name of df
-  patient_dfs[[len+1]] <- assign(name, read.csv(i, row.names = 1)) #create independent 'name' df and append it to list
+  patient_dfs[[len+1]] <- assign(name, read.csv(paste0('./Clean_Data/',i), row.names = 1)) #create independent 'name' df and append it to list
   patient_dfs[[len+1]] <- name # update element name in list 
   name<- get(name) 
-  name[is.na(name)]<- 0
+  name[is.na(name)]<- 0 #assign NAs as 0s
 }
-rm(name, len)
 
+# assign NAs as 0s
 all_data<- read.csv(all_data_file, row.names = 1)
 all_data[is.na(all_data)]<- 0
 
@@ -42,7 +42,6 @@ for (id in patient_dfs){
   boxplot(df[,2:3], main = paste0("Boxplot of ", id, " Expression Values"), col="lightblue", outline=FALSE,
           ylab='Read Count')
 }
-rm(df)
 
 boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
           ylab='Read count')
@@ -56,7 +55,7 @@ DGE_counts <- DGEList(counts = all_data,
 # add 'day' info as condition 
 design_table<- as.data.frame(colnames(all_data[2:9]))
 design_table<- rename(design_table, 'samples'='colnames(all_data[2:9])')
-design_table$day<- c(rep("day 0",4), rep("day 6",4))
+design_table$day<- as.factor(c(rep("day 0",4), rep("day 6",4)))
 
 # Confirm order matches 
 summary(colnames(all_data[2:9]) == design_table$samples)
@@ -73,7 +72,17 @@ summary(genes_to_keep)
 # filter data 
 DGE_counts <- DGE_counts[genes_to_keep, keep.lib.sizes = FALSE] #recalculate library sizes
 dim(DGE_counts)[1]==summary(genes_to_keep)[3]
-rm(genes_to_keep)
+
+
+relevant_genes<- list()
+relevant_genes <- DGE_counts$genes %>% filter(gene_name == "ALDH1A1"| 
+                                           gene_name =="CD44"| 
+                                           # gene_name =="CD133"| 
+                                           gene_name == "CD24"| 
+                                           # gene_name =="CD117"| 
+                                           gene_name == "EPCAM"| 
+                                           gene_name ==  "THY1")
+relevant_genes #all OCSC genes present 
 
 # ----------normalisation-----------------
 # comparing gene expr bw samples, but different samples have different library sizes (total read count) --> can skew analysis
@@ -85,7 +94,31 @@ DGE_counts$samples$norm.factors #currently all samples weighed equally
 DGE_counts <- calcNormFactors(DGE_counts)
 DGE_counts$samples$norm.factors # see normalisation factors have been adjusted
 
-
 #---------dispersion-------------------
+# estimate gene dispersion == estimate relative variability of true expr bw replicates
+# create design matrix (good practice)
+condition_<- design_table$day
+DGE_counts<- estimateDisp(DGE_counts, design = model.matrix(~condition_))
 
 # --------pairwise testing---------------
+# Exact test measuring difference in mean of selected 'pair' of conditions
+DGE_pairwise<- exactTest(DGE_counts, pair = c("day 0", "day 6")) #ensure these are saved as factors in DGEList object
+
+# topTags() returns the top differentially expressed genes ('tags')
+top_genes<- topTags(DGE_pairwise, n=20)
+
+
+# ----find OCSC marker genes-------
+
+most_genes<- topTags(DGE_pairwise, n=15000)
+OCSC_markers<- list()
+OCSC_markers <- most_genes$table %>% filter(gene_name == "ALDH1A1"| 
+                                                gene_name =="CD44"| 
+                                                # gene_name =="CD133"| 
+                                                gene_name == "CD24"| 
+                                                # gene_name =="CD117"| 
+                                                gene_name == "EPCAM"| 
+                                                gene_name ==  "THY1")
+OCSC_markers # stats for all OCSC genes
+# all OCSC have insignificant FDR
+# CD44 top ranked of the five

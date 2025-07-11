@@ -90,7 +90,7 @@ for (i in 1:length(patients_list)) {
 
 
 # ----- data cleaning & exporting -----
-
+dir.create('./Clean_Data')
 #intrapatient 
 clean_patients <- list()
 for (i in 1:length(patients_list)) {
@@ -100,7 +100,7 @@ for (i in 1:length(patients_list)) {
   
   clean_patients[[i]] <- clean_df 
   print(sum(duplicated(clean_df$gene_name)))
-  write.csv(clean_df, paste0("clean_", names(patients_list)[i], '.csv'), row.names = FALSE)
+  write.csv(clean_df, paste0("./Clean_Data/clean_", names(patients_list)[i], '.csv'), row.names = FALSE)
 }
 rm(clean_df)
 
@@ -112,5 +112,5 @@ clean_all_data <- all_data[!apply(is.na(all_data[, 3:10]), 1, all), ] %>%
 
 sum(duplicated(clean_all_data$gene_name)) #TRUE
 
-write.csv(clean_all_data, 'clean_all_data.csv', row.names = FALSE)
+write.csv(clean_all_data, './Clean_Data/clean_all_data.csv', row.names = FALSE)
 
