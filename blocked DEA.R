@@ -50,8 +50,7 @@ DGE_counts <- DGEList(counts = all_data,
 DGE_counts$genes$gene_name<-NULL
 
 # add 'day' info as condition 
-design_table<- as.data.frame(colnames(all_data[2:9]))
-design_table<- rename(design_table, 'samples'='colnames(all_data[2:9])')
+design_table<- data.frame(samples = colnames(all_data[2:9]))
 design_table$patient<- as.factor(str_replace(design_table$samples, "_D[06]$",''))
 design_table$day<- as.factor(c(rep("day 0",4), rep("day 6",4)))
 
@@ -100,21 +99,24 @@ lrt <- glmLRT(fit, coef = "condition_day 6")
 # design = matrix of what samples are being compared
 # looking at: change in gene expression Day 0 to Day 6 after accounting for patient-specific differences
 
+DEA_results <- topTags(lrt, n = Inf)$table
+write.csv(DEA_results, 'DEA_results.csv', row.names = TRUE)
+
 # select top 20 genes
 top_genes<- topTags(lrt, n=20)
 
 
 # ---- find OCSC marker genes-------
 
-most_genes<- topTags(lrt, n=15000)
+all_genes<- topTags(lrt, n=Inf)
 OCSC_markers<- list()
-OCSC_markers <- most_genes$table %>% filter(genes == "ALDH1A1"| 
+OCSC_markers <- all_genes$table %>% filter(genes == "ALDH1A1"| 
                                               genes =="CD44"| 
                                               genes == "CD24"| 
                                               genes == "EPCAM"| 
                                               genes ==  "THY1")
 OCSC_markers # stats for all OCSC genes
-rm(most_genes)
+rm(all_genes)
 # all OCSC have insignificant FDR
 # CD44 top ranked of the five
 
