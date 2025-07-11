@@ -5,6 +5,7 @@
 # BiocManager::install("edgeR")
 library(edgeR)
 library(limma) #dependency of edgeR
+library(tidyverse)
 
 
 # --- load cleaned data ----
