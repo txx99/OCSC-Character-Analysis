@@ -51,12 +51,12 @@ if (nrow(gsea_go@result) == 0) {
   print(head(gsea_go@result, 5))
   
   #Save Dotplot
-  ggsave("dotplot.png",
+  ggsave("./Visualizations/dotplot.png",
          plot = dotplot(gsea_go, showCategory = 10),
          width = 8, height = 6)
   
   #Save GSEA plot
-  ggsave("gsea_plot.png",
+  ggsave("./Visualizations/gsea_plot.png",
          plot = gseaplot2(gsea_go, geneSetID = gsea_go@result$ID[1]),
          width = 8, height = 6)
 
@@ -65,6 +65,6 @@ if (nrow(gsea_go@result) == 0) {
     ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8)) +
     ggplot2::labs(x = "Gene rank (Day 6 → Day 0)")
   
-  ggsave("ridgeplot.png",
+  ggsave("./Visualizations/ridgeplot.png",
          plot = ridge_plot,
          width = 8, height = 6)}

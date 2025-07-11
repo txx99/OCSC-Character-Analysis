@@ -41,12 +41,10 @@ all_data_wide %>%
   theme(legend.position = 'none', 
         panel.background = element_rect(fill = 'white', 
                                         colour = 'grey'))
-ggsave("exploratory_scatter.png", 
+ggsave("./Visualizations/exploratory_scatter.png", 
        width = 8, 
        height = 6)
 
-# boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
-#         ylab='Read count')
 
 # ----DGEList------
 # create DGEList class object 
@@ -54,7 +52,7 @@ DGE_counts <- DGEList(counts = all_data,
                       genes = all_data$gene_name)
 DGE_counts$genes$gene_name<-NULL
 
-# add 'day' info as condition 
+# add condition and patient grouping (factored) 
 design_table<- data.frame(samples = colnames(all_data[2:9]))
 design_table$patient<- as.factor(str_replace(design_table$samples, "_D[06]$",''))
 design_table$day<- as.factor(c(rep("day 0",4), rep("day 6",4)))
@@ -68,8 +66,8 @@ DGE_counts$samples$group2<- as.factor(design_table$patient)
 
 
 #------filter low expression genes---------
-# filterByExpr keeps genes that have at least min.count ( = 10) reads in a worthwhile number samples
-# will automatically look in your DGEList object for group info, etc
+# filterByExpr keeps only genes meeting the min.count ( = 10) reads 
+# will automatically look in your DGEList object for group info
 genes_to_keep <- filterByExpr(DGE_counts)
 summary(genes_to_keep)
 
@@ -82,8 +80,8 @@ dim(DGE_counts)[1]==summary(genes_to_keep)[3]
 # normalise so that each sample has relatively similar impact on DEA analysis, reduce bias for high expr genes
 DGE_counts$samples$norm.factors #currently all samples weighed equally
 
-# calcNormFactors() normalises normalizes across all samples based on lib sizes (assumption: genes *not* differentially expressed)
-# by scaling to minimise LogFC bw samples of the same treatment
+# calcNormFactors() normalizes across all samples based on lib sizes (assumes genes *not* differentially expressed)
+# by scaling to minimise LogFC bw samples
 DGE_counts <- calcNormFactors(DGE_counts)
 DGE_counts$samples$norm.factors # see normalisation factors have been adjusted
 
@@ -93,22 +91,20 @@ DGE_counts$samples$norm.factors # see normalisation factors have been adjusted
 condition_<- design_table$day
 patient_<- design_table$patient
 
+# ---- glm test (blocking intrapatient covariates) -------------
+
+# define design = model matrix of what samples are being compared
 design_2 <- model.matrix(~patient_+condition_)
 DGE_counts<- estimateDisp(DGE_counts, design = design_2)
 
-# ---- glm test (blocking intrapatient) -------------
 fit <- glmFit(DGE_counts, design_2)
 
 # Likelihood ratio test
 lrt <- glmLRT(fit, coef = "condition_day 6")
-# design = matrix of what samples are being compared
-# looking at: change in gene expression Day 0 to Day 6 after accounting for patient-specific differences
+# looking at: change in gene expression at Day 6 after accounting for patient-specific differences
 
 DEA_results <- topTags(lrt, n = Inf)$table
 write.csv(DEA_results, 'DEA_results.csv', row.names = TRUE)
-
-# select top 20 genes
-top_genes<- topTags(lrt, n=20)
 
 
 # ---- find OCSC marker genes-------
@@ -122,8 +118,6 @@ OCSC_markers <- all_genes$table %>% filter(genes == "ALDH1A1"|
                                               genes ==  "THY1")
 OCSC_markers # stats for all OCSC genes
 rm(all_genes)
-# all OCSC have insignificant FDR
-# CD44 top ranked of the five
 
 
 OCSC_markers %>% ggplot(aes(x = genes, 
@@ -134,7 +128,7 @@ OCSC_markers %>% ggplot(aes(x = genes,
   labs(x = 'gene', 
        y = 'logFC Value') +
   theme_classic()
-ggsave("inter_expr.png", 
+ggsave("./Visualizations/inter_expr.png", 
        width = 8, 
        height = 6)
 
@@ -146,7 +140,7 @@ OCSC_markers %>% EnhancedVolcano(lab = 'genes',
                                  ylab = 'FDR (p-adj)',
                                  pCutoff = 0.05, 
                                  FCcutoff = 2)
-ggsave("OCSC_volcano.png", 
+ggsave("./Visualizations/OCSC_volcano.png", 
        width = 8, 
        height = 6)
 
@@ -159,88 +153,10 @@ DEA_results %>% EnhancedVolcano(lab = DEA_results$genes,
                                 pCutoff = 0.05, 
                                 FCcutoff = 2)
 
-ggsave("DEA_volcano.png", 
+ggsave("./Visualizations/DEA_volcano.png", 
        width = 8, 
        height = 6)
 
 
 
 
-
-
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-# setwd('./Clean_Data')
-# getwd()
-# patient_csv_files<-(list.files(pattern="^clean_A", full.names = FALSE ))
-# setwd('..')
-# 
-# patient_dfs=list() # list of all clean patient dfs
-# for (i in patient_csv_files){
-#   len<- length(patient_dfs)
-#   name<- str_replace_all(i, c(".csv$"= "", "^clean_" = "")) # name of df
-#   patient_dfs[[len+1]] <- assign(name, read.csv(paste0('./Clean_Data/',i), row.names = 1)) #create independent 'name' df and append it to list
-#   patient_dfs[[len+1]] <- name # update element name in list 
-#   name_df<- get(name)
-#   name_df<- rename(name_df, "day 0"="d0_rc", 'day 6'='d6_rc')
-#   name_df[is.na(name_df)]<- 0
-#   assign(name, name_df) #assign NAs as 0s
-# }
-# 
-# 
-# #-----boxplots + scatterplots? ------
-# 
-# # individual d0 v d6 boxplots
-# for (id in patient_dfs){
-#   df<- get(id)
-#   boxplot(df[,2:3], main = paste0("Boxplot of ", id, " Expression Values"), col="lightblue", outline=FALSE,
-#           ylab='Read Count')
-# }
-# 
-# # -----DGEList------
-# # create DGEList class object
-# 
-# for (i in patient_dfs){
-#   df<- get(i)
-#   design_table<- as.data.frame(colnames(df[2:3]))
-#   design_table<- rename(design_table, 'samples'='colnames(df[2:3])')
-#   design_table$day<- as.factor(c("day 0","day 6"))
-# 
-# 
-#   DGE_counts <- DGEList(counts = df,
-#                       genes = df$gene_name)
-#   DGE_counts$samples$group<- as.factor(design_table$day)
-#   summary(colnames(df[2:3]) == design_table$samples)
-#   DGE_counts$samples$group<- as.factor(design_table$day)
-# 
-#   genes_to_keep <- filterByExpr(DGE_counts)
-#   summary(genes_to_keep)
-#   DGE_counts <- DGE_counts[genes_to_keep, keep.lib.sizes = FALSE] #recalculate library sizes
-# 
-#   condition_<- design_table$day
-#   DGE_counts<- estimateDisp(DGE_counts, design = model.matrix(~condition_))
-#   DGE_pairwise<- exactTest(DGE_counts, pair = c("day 0", "day 6")) #ensure these are saved as factors in DGEList object
-# 
-#   top_genes<- topTags(DGE_pairwise, n=20)
-#   most_genes<- topTags(DGE_pairwise, n=15000)
-#   OCSC_markers<- list()
-#   OCSC_markers <- most_genes$table %>% filter(gene_name == "ALDH1A1"|
-#                                                 gene_name =="CD44"|
-#                                                 # gene_name =="CD133"|
-#                                                 gene_name == "CD24"|
-#                                                 # gene_name =="CD117"|
-#                                                 gene_name == "EPCAM"|
-#                                                 gene_name ==  "THY1")
-#   OCSC_markers # stats for all OCSC genes
-# 
-#   assign(paste0(i, '_DGE_pairwise'), DGE_pairwise)
-#   assign(paste0(i, '_top_genes'), top_genes)
-#   assign(paste0(i, '_OCSC_markers'), OCSC_markers)
-# 
-# }
-# 
