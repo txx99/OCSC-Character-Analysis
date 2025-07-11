@@ -62,8 +62,9 @@ if (nrow(gsea_go@result) == 0) {
          width = 8, height = 6)
 
   #Save Ridgeplot
-  ridge_plot <- ridgeplot(gsea_go, showCategory = 15) +
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8))
+ridge_plot <- ridgeplot(gsea_go, showCategory = 15) +
+  ggplot2::theme(axis.text.y = ggplot2::element_text(size = 8)) +
+  ggplot2::labs(x = "Gene rank (Day 6 → Day 0)")
 
   ggsave("ridgeplot.png",
          plot = ridge_plot,
