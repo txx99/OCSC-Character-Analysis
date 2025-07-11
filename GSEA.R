@@ -7,7 +7,7 @@ library(enrichplot)
 library(tidyverse)
 
 #Get DEA results, run first if not
-dge_table <- topTags(lrt, n = Inf)$table
+dge_table <- read.csv('DEA_results.csv')
 
 #remove NA gene name rows
 dge_table <- dge_table %>% filter(!is.na(genes))
