@@ -28,8 +28,7 @@ DGE_counts <- DGEList(counts = all_data,
 DGE_counts$genes$gene_name<-NULL
 
 # add 'day' info as condition 
-design_table<- as.data.frame(colnames(all_data[2:9]))
-design_table<- rename(design_table, 'samples'='colnames(all_data[2:9])')
+design_table<- data.frame(samples = colnames(all_data[2:9]))
 design_table$patient<- as.factor(str_replace(design_table$samples, "_D[06]$",''))
 design_table$day<- as.factor(c(rep("day 0",4), rep("day 6",4)))
 
