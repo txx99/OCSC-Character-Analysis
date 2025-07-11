@@ -8,18 +8,8 @@ library(limma) #dependency of edgeR
 
 
 # --- load cleaned data ----
-patient_csv_files<-(list.files("^clean_A", full.names = FALSE ))
-all_data_file<- "./Clean_Data/clean_all_data.csv"
 
-patient_dfs=list() # list of all clean patient dfs
-for (i in patient_csv_files){
-  len<- length(patient_dfs)
-  name<- str_replace_all(i, c(".csv$"= "", "^clean_" = "")) # name of df
-  patient_dfs[[len+1]] <- assign(name, read.csv(paste0('./Clean_Data/',i), row.names = 1)) #create independent 'name' df and append it to list
-  patient_dfs[[len+1]] <- name # update element name in list 
-  name<- get(name) 
-  name[is.na(name)]<- 0 #assign NAs as 0s
-}
+all_data_file<- "./Clean_Data/clean_all_data.csv"
 
 # assign NAs as 0s
 all_data<- read.csv(all_data_file, row.names = 1)
@@ -35,13 +25,6 @@ all_data[is.na(all_data)]<- 0
 
 
 #-----boxplots + scatterplots? ------
-
-# individual d0 v d6 boxplots
-for (id in patient_dfs){
-  df<- get(id)
-  boxplot(df[,2:3], main = paste0("Boxplot of ", id, " Expression Values"), col="lightblue", outline=FALSE,
-          ylab='Read Count')
-}
 
 boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
           ylab='Read count')
