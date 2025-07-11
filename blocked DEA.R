@@ -6,20 +6,47 @@
 library(edgeR)
 library(limma) #dependency of edgeR
 library(tidyverse)
-
+library(ggplot2)
+library(EnhancedVolcano)
 
 # --- load cleaned data ----
 
 all_data_file<- "./Clean_Data/clean_all_data.csv"
 
 # assign NAs as 0s
-all_data<- read.csv(all_data_file, row.names = 1)
+all_data<- read.csv(all_data_file)
 all_data[is.na(all_data)]<- 0
 
 #-----boxplots + scatterplots? ------
+all_data_long <- all_data %>% 
+  pivot_longer(!c(ensembl_gene_rec, gene_name), 
+               names_to = c('patient', 'day'), 
+               names_sep = '_',
+               values_to = 'read_count')
 
-boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
-        ylab='Read count')
+all_data_wide <- all_data_long %>% 
+  pivot_wider(names_from = day, 
+              values_from = read_count)
+
+all_data_wide %>%
+  mutate(D0 = as.numeric(unlist(D0)),
+         D6 = as.numeric(unlist(D6)),
+         patient = as.factor(patient)) %>%
+  ggplot(aes(x = D0, 
+             y = D6)) +
+  geom_point() +
+  labs(x = 'D0 Read Count', 
+       y = 'D6 Read Count') +
+  facet_wrap(vars(patient)) +
+  theme(legend.position = 'none', 
+        panel.background = element_rect(fill = 'white', 
+                                        colour = 'grey'))
+ggsave("exploratory_scatter.png", 
+       width = 8, 
+       height = 6)
+
+# boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
+#         ylab='Read count')
 
 # ----DGEList------
 # create DGEList class object 
@@ -99,20 +126,42 @@ rm(all_genes)
 # CD44 top ranked of the five
 
 
+OCSC_markers %>% ggplot(aes(x = genes, 
+                            y = logFC)) + 
+  geom_col() + 
+  geom_text(aes(y = 2, 
+                label = round(FDR, digits = 4))) +
+  labs(x = 'gene', 
+       y = 'logFC Value') +
+  theme_classic()
+ggsave("inter_expr.png", 
+       width = 8, 
+       height = 6)
 
+OCSC_markers %>% EnhancedVolcano(lab = 'genes', 
+                                 x = 'logFC' , 
+                                 y = 'FDR',
+                                 title = '',
+                                 xlab = 'Log2 FC',
+                                 ylab = 'FDR (p-adj)',
+                                 pCutoff = 0.05, 
+                                 FCcutoff = 2)
+ggsave("OCSC_volcano.png", 
+       width = 8, 
+       height = 6)
 
+DEA_results %>% EnhancedVolcano(lab = DEA_results$genes, 
+                                x = 'logFC' , 
+                                y = 'FDR',
+                                title = '',
+                                xlab = 'Log2 FC',
+                                ylab = 'FDR (p-adj)',
+                                pCutoff = 0.05, 
+                                FCcutoff = 2)
 
-
-
-
-
-
-
-
-
-
-
-
+ggsave("DEA_volcano.png", 
+       width = 8, 
+       height = 6)
 
 
 
