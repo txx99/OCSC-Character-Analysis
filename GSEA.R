@@ -52,14 +52,13 @@ if (nrow(gsea_go@result) == 0) {
 
   #Save Dotplot
   ggsave("dotplot.png",
-         plot = dotplot(gsea_go, showCategory = 10, title = "Top GO Pathways"),
-         width = 8, height = 6)
+         plot = dotplot(gsea_go, showCategory = 10,
+         width = 8, height = 6))
 
   #Save GSEA plot
   ggsave("gsea_plot.png",
          plot = gseaplot2(gsea_go, geneSetID = gsea_go@result$ID[1],
-                          title = gsea_go@result$Description[1]),
-         width = 8, height = 6)
+         width = 8, height = 6))
 
   #Save Ridgeplot
 ridge_plot <- ridgeplot(gsea_go, showCategory = 15) +
