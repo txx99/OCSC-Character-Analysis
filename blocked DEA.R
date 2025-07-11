@@ -38,7 +38,13 @@ all_data_wide %>%
   geom_point(alpha = 0.5) +
   labs(x = 'D0 Read Count', 
        y = 'D6 Read Count') +
-  theme_bw()
+  facet_wrap(vars(patient)) +
+  theme(legend.position = 'none', 
+        panel.background = element_rect(fill = 'white', 
+                                        colour = 'grey'))
+ggsave("exploratory_scatter.png", 
+       width = 8, 
+       height = 6)
 
 # boxplot(all_data[,2:9], main = paste0("Boxplot of All Expression Values"), col="lightblue", outline=FALSE,
 #         ylab='Read count')
@@ -129,7 +135,9 @@ OCSC_markers %>% ggplot(aes(x = genes,
   labs(x = 'gene', 
        y = 'logFC Value') +
   theme_classic()
-
+ggsave("inter_expr.png", 
+       width = 8, 
+       height = 6)
 
 OCSC_markers %>% EnhancedVolcano(lab = 'genes', 
                                  x = 'logFC' , 
@@ -139,20 +147,22 @@ OCSC_markers %>% EnhancedVolcano(lab = 'genes',
                                  ylab = 'FDR (p-adj)',
                                  pCutoff = 0.05, 
                                  FCcutoff = 2)
+ggsave("OCSC_volcano.png", 
+       width = 8, 
+       height = 6)
 
+DEA_results %>% EnhancedVolcano(lab = DEA_results$genes, 
+                                x = 'logFC' , 
+                                y = 'FDR',
+                                title = '',
+                                xlab = 'Log2 FC',
+                                ylab = 'FDR (p-adj)',
+                                pCutoff = 0.05, 
+                                FCcutoff = 2)
 
-top_genes$table %>% EnhancedVolcano(lab = top_genes$table$genes, 
-                                 x = 'logFC' , 
-                                 y = 'FDR',
-                                 title = '',
-                                 xlab = 'Log2 FC',
-                                 ylab = 'FDR (p-adj)',
-                                 pCutoff = 0.05, 
-                                 FCcutoff = 2)
-
-
-
-
+ggsave("DEA_volcano.png", 
+       width = 8, 
+       height = 6)
 
 
 
