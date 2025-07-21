@@ -121,20 +121,6 @@ OCSC_markers # stats for all OCSC genes
 rm(all_genes)
 
 
-OCSC_markers %>% ggplot(aes(x = genes, 
-                            y = logFC)) + 
-  geom_col() + 
-  geom_text(aes(y = 2, 
-                label = round(FDR, digits = 4), 
-                size = 10)) +
-  labs(x = 'Gene', 
-       y = 'LogFC Value') +
-  theme_classic(base_size = 17) +
-  theme(legend.position = "none")
-ggsave("./Visualizations/inter_expr.png", 
-       width = 8, 
-       height = 6)
-
 OCSC_markers %>% EnhancedVolcano(lab = 'genes', 
                                  x = 'logFC' , 
                                  y = 'FDR',
