@@ -38,6 +38,7 @@ all_data_wide %>%
   labs(x = 'D0 Read Count', 
        y = 'D6 Read Count') +
   facet_wrap(vars(patient)) +
+  theme_classic(base_size = 17) +
   theme(legend.position = 'none', 
         panel.background = element_rect(fill = 'white', 
                                         colour = 'grey'))
@@ -127,7 +128,7 @@ OCSC_markers %>% ggplot(aes(x = genes,
                 label = round(FDR, digits = 4))) +
   labs(x = 'gene', 
        y = 'logFC Value') +
-  theme_classic()
+  theme_classic(base_size = 17)
 ggsave("./Visualizations/inter_expr.png", 
        width = 8, 
        height = 6)
