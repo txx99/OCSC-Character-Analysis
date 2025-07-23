@@ -52,7 +52,7 @@ if (nrow(gsea_go@result) == 0) {
   
   #Save Dotplot
   ggsave("./Visualizations/dotplot.png",
-         plot = dotplot(gsea_go, showCategory = 10),
+         plot = dotplot(gsea_go, showCategory = 10, font.size = 15),
          width = 8, height = 6)
   
   #Save GSEA plot
