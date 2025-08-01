@@ -8,3 +8,6 @@ Raw Data: Read_Count_Data
 Code: Preprocessing.R > blocked_DEA.R > GSEA.R
 
 Outputs: Clean_Data > DEA_results.csv
+
+
+Workflow: Preprocessing.R > Clean_Data/clean_all_data.csv | blocked_DEA.R > DEA_results.csv | GSEA.R
