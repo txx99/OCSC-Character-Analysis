@@ -5,4 +5,5 @@ To do this, we perform {edgeR} DEA and {clusterProfiler} GSEA, with visualisatio
 
 Raw Data: Read_Count_Data
 
-Workflow: Preprocessing.R > Clean_Data/clean_all_data.csv | blocked_DEA.R > DEA_results.csv | GSEA.R
+Workflow: \
+Preprocessing.R > Clean_Data/clean_all_data.csv | blocked_DEA.R > DEA_results.csv | GSEA.R
